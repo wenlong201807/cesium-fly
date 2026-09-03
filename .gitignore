@@ -9,3 +9,10 @@ dist
 
 # pnpm
 .pnpm-store
+
+# TypeScript 增量编译缓存（由 tsc -b 生成，不应提交）
+*.tsbuildinfo
+
+# Vite 配置编译产物（vite-plugin-cesium / vite-plugin-mock 触发生成的 .d.ts / .js）
+vite.config.js
+vite.config.d.ts
