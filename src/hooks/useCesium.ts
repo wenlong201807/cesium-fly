@@ -1,6 +1,6 @@
 // src/hooks/useCesium.ts
 // 关键：React StrictMode 会让 effect 跑两次（mount→unmount→mount）。
-// 这里用一个 ref 锁：第一次 mount 创建 viewer，第二次 mount（StrictMode 触发的）
+// 这里用 ref 锁：第一次 mount 创建 viewer，第二次 mount（StrictMode 触发）
 // 直接复用已创建的 viewer，绝不销毁（除非组件真正卸载）。
 import { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
@@ -13,11 +13,12 @@ export interface CesiumHandle {
   error: string | null;
 }
 
-export function useCesium(containerRef: React.RefObject<HTMLDivElement>): CesiumHandle {
+export function useCesium(
+  containerRef: React.RefObject<HTMLDivElement>
+): CesiumHandle {
   const [viewer, setViewer] = useState<Cesium.Viewer | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // module-level 缓存：跨 StrictMode 双调用复用同一 viewer
   const cachedRef = useRef<Cesium.Viewer | null>(null);
   const mountedRef = useRef(0);
 
@@ -45,8 +46,7 @@ export function useCesium(containerRef: React.RefObject<HTMLDivElement>): Cesium
 
     return () => {
       mountedRef.current -= 1;
-      // 仅在所有 mount 都卸载后才真正销毁
-      // 用 queueMicrotask 延后到下一个 tick，避开 React 同步 unmount→remount
+      // 延后到下一个 tick，避开 React 同步 unmount→remount
       queueMicrotask(() => {
         if (mountedRef.current === 0) {
           cachedRef.current?.destroy();

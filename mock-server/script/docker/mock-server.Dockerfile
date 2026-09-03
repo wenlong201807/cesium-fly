@@ -1,14 +1,16 @@
-# mock-server 加固版 Dockerfile（非 root + dumb-init）
+# mock-server 加固版 Dockerfile
+# 用 node:20-alpine，非 root 运行，dumb-init 启动
 FROM node:20-alpine
 
 WORKDIR /app
 
+# 只装生产依赖
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev --no-audit --no-fund --ignore-scripts
 
 COPY . .
 
-# dumb-init 收僵尸进程 + 非 root 用户
+# 加 dumb-init 收僵尸进程 + 切非 root 用户
 RUN apk add --no-cache dumb-init \
     && addgroup -S app && adduser -S app -G app \
     && chown -R app:app /app

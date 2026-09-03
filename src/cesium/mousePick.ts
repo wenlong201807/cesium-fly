@@ -16,56 +16,53 @@ export interface PickInfo {
 export function setupMousePick(
   viewer: Cesium.Viewer,
   waypoints: Waypoint[],
+  startTime: Cesium.JulianDate,
   onPick: (info: PickInfo | null) => void
 ): () => void {
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
 
   handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
     const picked = viewer.scene.pick(click.position);
-    if (picked && picked.id && picked.id.id) {
-      const entity = picked.id as Cesium.Entity;
-      const pos = entity.position?.getValue(viewer.clock.currentTime);
-      if (!pos) {
-        onPick(null);
-        return;
-      }
-      const carto = Cesium.Cartographic.fromCartesian(pos);
-      const lon = Cesium.Math.toDegrees(carto.longitude);
-      const lat = Cesium.Math.toDegrees(carto.latitude);
-      const alt = carto.height;
-
-      // 在 waypoints 里找最接近的航点作为 speed/heading/phase 的快照
-      const wp = findClosestWaypoint(waypoints, viewer.clock.currentTime, start);
-      const info: PickInfo = {
-        id: String(entity.id),
-        lon,
-        lat,
-        alt,
-        speed: wp?.speed ?? 0,
-        heading: wp?.heading ?? 0,
-        phase: wp?.phase ?? 'cruise',
-      };
-      onPick(info);
-    } else {
+    if (!picked || !picked.id) {
       onPick(null);
+      return;
     }
+    const entity = picked.id as Cesium.Entity;
+    const pos = entity.position?.getValue(viewer.clock.currentTime);
+    if (!pos) {
+      onPick(null);
+      return;
+    }
+    const carto = Cesium.Cartographic.fromCartesian(pos);
+    const lon = Cesium.Math.toDegrees(carto.longitude);
+    const lat = Cesium.Math.toDegrees(carto.latitude);
+    const alt = carto.height;
+    const wp = findClosestWaypoint(
+      waypoints,
+      viewer.clock.currentTime,
+      startTime
+    );
+
+    onPick({
+      id: String(entity.id),
+      lon,
+      lat,
+      alt,
+      speed: wp?.speed ?? 0,
+      heading: wp?.heading ?? 0,
+      phase: wp?.phase ?? 'cruise',
+    });
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
   return () => handler.destroy();
 }
 
-// helpers ------------------------------------------------------------
-
-let start: Cesium.JulianDate | null = null;
-function setStart(s: Cesium.JulianDate) { start = s; }
-export { setStart as setMousePickStart };
-
 function findClosestWaypoint(
   waypoints: Waypoint[],
   current: Cesium.JulianDate,
-  base: Cesium.JulianDate | null
+  base: Cesium.JulianDate
 ): Waypoint | null {
-  if (waypoints.length === 0 || !base) return null;
+  if (waypoints.length === 0) return null;
   const elapsed = Cesium.JulianDate.secondsDifference(current, base);
   let best: Waypoint | null = null;
   let bestDiff = Infinity;

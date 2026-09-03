@@ -8,7 +8,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "mock": "echo 'vite-plugin-mock 内置，无需独立命令'"
+    "mock": "echo 'vite-plugin-mock 内置，无需独立命令'",
+    "lint": "oxlint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "axios": "^1.7.7",
@@ -21,9 +27,13 @@
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "husky": "^9.1.7",
+    "oxlint": "^1.0.0",
+    "prettier": "^3.4.2",
     "typescript": "^5.5.4",
     "vite": "^5.4.8",
     "vite-plugin-cesium": "^1.2.22",
-    "vite-plugin-mock": "^3.0.2"
+    "vite-plugin-mock": "^3.0.2",
+    "vitest": "^2.1.8"
   }
 }

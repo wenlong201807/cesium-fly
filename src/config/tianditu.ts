@@ -1,7 +1,8 @@
 // src/config/tianditu.ts
 // 天地图 WMTS 瓦片 URL 工厂
 
-const TK = import.meta.env.VITE_TIANDITU_TK || (window as any).__TIANDITU_TK__ || '';
+const TK =
+  import.meta.env.VITE_TIANDITU_TK || (window as any).__TIANDITU_TK__ || '';
 
 // 子域名 0~7，并发加载提速
 const SUB_DOMAINS = ['0', '1', '2', '3', '4', '5', '6', '7'];

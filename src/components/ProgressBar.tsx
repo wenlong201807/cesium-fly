@@ -1,6 +1,7 @@
 // src/components/ProgressBar.tsx
 // 时间轴：拖动滑块跳转 viewer.clock.currentTime
-import { useEffect, useState } from 'react';
+// 注意：用 ref 而非 state 存储 dragging，避免重新订阅 onTick
+import { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { formatDuration } from '../utils/format';
 
@@ -11,13 +12,14 @@ export interface ProgressBarProps {
 
 export function ProgressBar({ viewer, duration }: ProgressBarProps) {
   const [now, setNow] = useState(0);
-  // 用户拖动时不要被 onTick 反向覆盖
-  const [dragging, setDragging] = useState(false);
+  // 用 ref 存 dragging，不触发 useEffect 重新订阅
+  const draggingRef = useRef(false);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     if (!viewer || !viewer.clock) return;
     const remove = viewer.clock.onTick.addEventListener((clock) => {
-      if (dragging) return;
+      if (draggingRef.current) return;
       const elapsed = Cesium.JulianDate.secondsDifference(
         clock.currentTime,
         clock.startTime
@@ -25,7 +27,7 @@ export function ProgressBar({ viewer, duration }: ProgressBarProps) {
       setNow(Math.max(0, Math.min(duration, elapsed)));
     });
     return () => remove();
-  }, [viewer, duration, dragging]);
+  }, [viewer, duration]);
 
   const pct = duration > 0 ? (now / duration) * 100 : 0;
 
@@ -38,10 +40,22 @@ export function ProgressBar({ viewer, duration }: ProgressBarProps) {
         step={1}
         value={now}
         disabled={!viewer}
-        onMouseDown={() => setDragging(true)}
-        onMouseUp={() => setDragging(false)}
-        onTouchStart={() => setDragging(true)}
-        onTouchEnd={() => setDragging(false)}
+        onMouseDown={() => {
+          draggingRef.current = true;
+          forceUpdate((n) => n + 1);
+        }}
+        onMouseUp={() => {
+          draggingRef.current = false;
+          forceUpdate((n) => n + 1);
+        }}
+        onTouchStart={() => {
+          draggingRef.current = true;
+          forceUpdate((n) => n + 1);
+        }}
+        onTouchEnd={() => {
+          draggingRef.current = false;
+          forceUpdate((n) => n + 1);
+        }}
         onChange={(e) => {
           if (!viewer) return;
           const v = Number(e.target.value);

@@ -1,0 +1,15 @@
+node_modules
+dist
+.pnpm-store
+*.tsbuildinfo
+package-lock.json
+pnpm-lock.yaml
+.idea
+.vscode
+.DS_Store
+*.min.js
+*.min.css
+public/models/*.glb
+dist/
+coverage/
+.husky/_

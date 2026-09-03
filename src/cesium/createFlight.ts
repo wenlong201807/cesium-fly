@@ -29,7 +29,11 @@ function buildPathMaterial(waypoints: Waypoint[], start: Cesium.JulianDate) {
   const composite = new Cesium.CompositeMaterialProperty();
   for (let i = 0; i < waypoints.length - 1; i++) {
     const wp = waypoints[i];
-    const t0 = Cesium.JulianDate.addSeconds(start, wp.t, new Cesium.JulianDate());
+    const t0 = Cesium.JulianDate.addSeconds(
+      start,
+      wp.t,
+      new Cesium.JulianDate()
+    );
     const t1 = Cesium.JulianDate.addSeconds(
       start,
       waypoints[i + 1].t,
@@ -52,7 +56,10 @@ function buildPathMaterial(waypoints: Waypoint[], start: Cesium.JulianDate) {
   return composite;
 }
 
-export function createFlight(viewer: Cesium.Viewer, data: FlightData): FlightHandle {
+export function createFlight(
+  viewer: Cesium.Viewer,
+  data: FlightData
+): FlightHandle {
   // 注意：默认 shouldAnimate=false，由 useFlight.handle.start() 启动
   const start = Cesium.JulianDate.fromIso8601('2026-09-03T10:00:00Z');
   const stop = Cesium.JulianDate.addSeconds(
@@ -66,7 +73,11 @@ export function createFlight(viewer: Cesium.Viewer, data: FlightData): FlightHan
   // 2. SampledPositionProperty 收集所有航点
   const position = new Cesium.SampledPositionProperty();
   data.waypoints.forEach((wp) => {
-    const t = Cesium.JulianDate.addSeconds(start, wp.t, new Cesium.JulianDate());
+    const t = Cesium.JulianDate.addSeconds(
+      start,
+      wp.t,
+      new Cesium.JulianDate()
+    );
     position.addSample(
       t,
       Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt)
@@ -141,20 +152,4 @@ export function createFlight(viewer: Cesium.Viewer, data: FlightData): FlightHan
     },
   };
   return handle;
-}
-
-/** 飞到所有航点的中心，便于一开始看到整条航线 */
-function flyToOverview(
-  viewer: Cesium.Viewer,
-  waypoints: Waypoint[]
-): void {
-  if (waypoints.length === 0) return;
-  const lons = waypoints.map((w) => w.lon);
-  const lats = waypoints.map((w) => w.lat);
-  const lon = (Math.min(...lons) + Math.max(...lons)) / 2;
-  const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
-  viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(lon, lat, 1_200_000),
-    duration: 1.5,
-  });
 }

@@ -1,15 +1,20 @@
-// src/App.css
+/* src/App.css */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body, #root, .app {
+html,
+body,
+#root,
+.app {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei',
+    sans-serif;
 }
 
 .app-header {
@@ -93,9 +98,18 @@ main {
   min-width: 220px;
 }
 
-.control-panel { top: 80px; left: 16px; }
-.view-switcher { top: 80px; right: 16px; }
-.flight-info { bottom: 80px; right: 16px; }
+.control-panel {
+  top: 80px;
+  left: 16px;
+}
+.view-switcher {
+  top: 80px;
+  right: 16px;
+}
+.flight-info {
+  bottom: 80px;
+  right: 16px;
+}
 
 .control-panel h3,
 .view-switcher h3,

@@ -21,7 +21,7 @@ export function formatSpeed(kmh: number): string {
 /** 度 → 航向描述 */
 export function formatHeading(heading: number): string {
   const dirs = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
-  const idx = Math.round(((heading % 360) + 360) % 360 / 45) % 8;
+  const idx = Math.round((((heading % 360) + 360) % 360) / 45) % 8;
   return `${heading.toFixed(0)}° (${dirs[idx]})`;
 }
 

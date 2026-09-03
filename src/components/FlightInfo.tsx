@@ -2,7 +2,12 @@
 // 实时显示飞机当前位置 / 高度 / 速度 / 航向 / 阶段 / 进度
 import { useEffect, useState } from 'react';
 import * as Cesium from 'cesium';
-import { formatAlt, formatHeading, formatLonLat, formatSpeed } from '../utils/format';
+import {
+  formatAlt,
+  formatHeading,
+  formatLonLat,
+  formatSpeed,
+} from '../utils/format';
 import type { FlightData, Waypoint } from '../types/flight';
 
 export interface FlightInfoProps {
@@ -89,12 +94,30 @@ export function FlightInfo({ viewer, flightData }: FlightInfoProps) {
       {state ? (
         <table>
           <tbody>
-            <tr><td>经纬度</td><td>{formatLonLat(state.lon, state.lat)}</td></tr>
-            <tr><td>高度</td><td>{formatAlt(state.alt)}</td></tr>
-            <tr><td>速度</td><td>{formatSpeed(state.speed)}</td></tr>
-            <tr><td>航向</td><td>{formatHeading(state.heading)}</td></tr>
-            <tr><td>阶段</td><td>{state.phase}</td></tr>
-            <tr><td>进度</td><td>{(state.progress * 100).toFixed(1)}%</td></tr>
+            <tr>
+              <td>经纬度</td>
+              <td>{formatLonLat(state.lon, state.lat)}</td>
+            </tr>
+            <tr>
+              <td>高度</td>
+              <td>{formatAlt(state.alt)}</td>
+            </tr>
+            <tr>
+              <td>速度</td>
+              <td>{formatSpeed(state.speed)}</td>
+            </tr>
+            <tr>
+              <td>航向</td>
+              <td>{formatHeading(state.heading)}</td>
+            </tr>
+            <tr>
+              <td>阶段</td>
+              <td>{state.phase}</td>
+            </tr>
+            <tr>
+              <td>进度</td>
+              <td>{(state.progress * 100).toFixed(1)}%</td>
+            </tr>
           </tbody>
         </table>
       ) : (

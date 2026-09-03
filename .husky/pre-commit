@@ -1,0 +1,8 @@
+#!/bin/sh
+# Husky pre-commit hook
+# Runs: tsc + lint + format-check + test
+
+pnpm tsc -b || { echo "❌ TypeScript check failed"; exit 1; }
+pnpm lint     || { echo "⚠️  Lint warnings (allowed)"; }
+pnpm format:check || { echo "❌ Code format issues. Run 'pnpm format' to fix"; exit 1; }
+pnpm test     || { echo "❌ Tests failed"; exit 1; }
