@@ -9,6 +9,7 @@ import { ControlPanel } from './ControlPanel';
 import { ViewSwitcher } from './ViewSwitcher';
 import { FlightInfo } from './FlightInfo';
 import { ProgressBar } from './ProgressBar';
+import { FPSCounter } from './FPSCounter';
 
 export function CesiumViewer() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,6 +39,7 @@ export function CesiumViewer() {
   return (
     <div className="cesium-wrapper">
       <div ref={containerRef} className="cesium-container" />
+      <FPSCounter containerRef={containerRef} />
 
       {error && (
         <div className="error-overlay">
