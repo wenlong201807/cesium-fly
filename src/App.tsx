@@ -1,15 +1,25 @@
 // src/App.tsx
-import { CesiumViewer } from './components/CesiumViewer';
+// HashRouter 多页面入口
+import { HashRouter, Route, Routes } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import FlightPage from './pages/FlightPage';
+import RoutesPage from './pages/RoutesPage';
+import PlanningPage from './pages/PlanningPage';
+import DecisionPage from './pages/DecisionPage';
+import './App.css';
 
 export default function App() {
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>✈️ Cesium 飞机飞行可视化</h1>
-      </header>
-      <main>
-        <CesiumViewer />
-      </main>
-    </div>
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<FlightPage />} />
+          <Route path="flight" element={<FlightPage />} />
+          <Route path="routes" element={<RoutesPage />} />
+          <Route path="planning" element={<PlanningPage />} />
+          <Route path="decision" element={<DecisionPage />} />
+        </Route>
+      </Routes>
+    </HashRouter>
   );
 }
