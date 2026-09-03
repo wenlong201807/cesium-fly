@@ -109,6 +109,7 @@ main {
 .flight-info {
   bottom: 80px;
   right: 16px;
+  min-width: 280px;
 }
 
 .control-panel h3,
@@ -258,6 +259,17 @@ main {
 
 .fps-counter .fps-label {
   color: rgba(255, 255, 255, 0.6);
+}
+
+.fps-counter .fps-sep {
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 2px;
+}
+
+.fps-counter .fps-dt {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 .progress-bar input[type='range'] {

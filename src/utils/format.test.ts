@@ -9,8 +9,12 @@ import {
 } from './format';
 
 describe('formatLonLat', () => {
-  it('格式化经纬度', () => {
-    expect(formatLonLat(116.397, 39.916)).toBe('116.397000°, 39.916000°');
+  it('固定宽度格式化经纬度（正值）', () => {
+    // formatCoord = [符号] + 3位整数 + "." + 6位小数 = 11字符
+    expect(formatLonLat(116.397, 39.916)).toBe(' 116.397000°,  039.916000°');
+  });
+  it('固定宽度格式化经纬度（负值）', () => {
+    expect(formatLonLat(-73.985, 40.748)).toBe('-073.985000°,  040.748000°');
   });
 });
 
