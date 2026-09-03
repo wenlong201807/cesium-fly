@@ -14,18 +14,34 @@ export interface FlightHandle {
   destroy: () => void;
 }
 
-/** 单个阶段的尾迹颜色 */
-const PHASE_COLOR: Record<Waypoint['phase'], Cesium.Color> = {
+/** 单个阶段的尾迹颜色（可通过参数覆盖） */
+const DEFAULT_PHASE_COLOR: Record<Waypoint['phase'], Cesium.Color> = {
   takeoff: Cesium.Color.fromCssColorString('#4a90e2'), // 蓝
   cruise: Cesium.Color.fromCssColorString('#f5a623'), // 黄
   landing: Cesium.Color.fromCssColorString('#e74c3c'), // 红
 };
 
+/** 单个阶段的尾迹颜色（接受外部覆盖，用于多航线区分） */
+export function buildPhaseColor(
+  override?: Partial<Record<Waypoint['phase'], string>>
+): Record<Waypoint['phase'], Cesium.Color> {
+  if (!override) return DEFAULT_PHASE_COLOR;
+  return {
+    takeoff: Cesium.Color.fromCssColorString(override.takeoff ?? '#4a90e2'),
+    cruise: Cesium.Color.fromCssColorString(override.cruise ?? '#f5a623'),
+    landing: Cesium.Color.fromCssColorString(override.landing ?? '#e74c3c'),
+  };
+}
+
 /**
- * 用 CompositeMaterialProperty 把每个航段的 [t_i, t_{i+1}) 染色，
- * 起飞=蓝 / 巡航=黄 / 降落=红。
+ * 用 CompositeMaterialProperty 把每个航段的 [t_i, t_{i+1}) 染色。
+ * @param colorMap 阶段 → CSS 颜色；不传则用默认（起飞=蓝 / 巡航=黄 / 降落=红）
  */
-function buildPathMaterial(waypoints: Waypoint[], start: Cesium.JulianDate) {
+function buildPathMaterial(
+  waypoints: Waypoint[],
+  start: Cesium.JulianDate,
+  colorMap: Record<Waypoint['phase'], Cesium.Color>
+) {
   const composite = new Cesium.CompositeMaterialProperty();
   for (let i = 0; i < waypoints.length - 1; i++) {
     const wp = waypoints[i];
@@ -46,7 +62,7 @@ function buildPathMaterial(waypoints: Waypoint[], start: Cesium.JulianDate) {
         isStartIncluded: true,
         isStopIncluded: false,
         data: new Cesium.PolylineGlowMaterialProperty({
-          color: PHASE_COLOR[wp.phase],
+          color: colorMap[wp.phase],
           glowPower: 0.2,
           taperPower: 1.0,
         }),
@@ -56,11 +72,22 @@ function buildPathMaterial(waypoints: Waypoint[], start: Cesium.JulianDate) {
   return composite;
 }
 
+export interface CreateFlightOptions {
+  /** 阶段颜色覆盖（不传则用默认配色） */
+  phaseColors?: Partial<Record<Waypoint['phase'], string>>;
+  /** 路径宽度（默认 3） */
+  pathWidth?: number;
+}
+
 export function createFlight(
   viewer: Cesium.Viewer,
-  data: FlightData
+  data: FlightData,
+  options: CreateFlightOptions = {}
 ): FlightHandle {
-  // 注意：默认 shouldAnimate=false，由 useFlight.handle.start() 启动
+  const colorMap = buildPhaseColor(options.phaseColors);
+  const pathWidth = options.pathWidth ?? 3;
+
+  // 注意：默认 shouldAnimate=false，由调用方启动
   const start = Cesium.JulianDate.fromIso8601('2026-09-03T10:00:00Z');
   const stop = Cesium.JulianDate.addSeconds(
     start,
@@ -108,10 +135,10 @@ export function createFlight(
     // 4. 轨迹：按阶段着色（CompositeMaterialProperty 会按时间切换颜色）
     path: {
       resolution: 1,
-      width: 3,
+      width: pathWidth,
       leadTime: 0, // 不画未来的轨迹（只画已飞过）
       trailTime: 10000, // 保留 10000 秒的尾迹
-      material: buildPathMaterial(data.waypoints, start),
+      material: buildPathMaterial(data.waypoints, start, colorMap),
     },
   });
 
@@ -122,9 +149,6 @@ export function createFlight(
   viewer.clock.clockRange = Cesium.ClockRange.CLAMPED;
   viewer.clock.multiplier = 10;
   viewer.clock.shouldAnimate = false; // 默认暂停，等待用户点播放
-
-  // 6. 延迟切到驾驶舱视角（在 CesiumViewer 挂载完成后切）
-  // 这里只返回一个 hint，真正切视角由 React 端通过 switchView 完成
 
   // 7. 封装操作
   const handle: FlightHandle = {
