@@ -625,3 +625,202 @@ main {
   color: rgba(255, 255, 255, 0.6);
   width: 60px;
 }
+
+/* Decision 页 - 自动驾驶决策 */
+.decision-page {
+  position: absolute;
+  inset: 56px 0 0 0;
+  display: grid;
+  grid-template-columns: 240px 1fr 280px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.decision-map {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.decision-map .cesium-container {
+  width: 100%;
+  height: 100%;
+}
+
+.decision-map .loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 20, 30, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  z-index: 10;
+}
+
+.decision-sidebar,
+.decision-info {
+  background: rgba(20, 20, 30, 0.85);
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+.decision-sidebar h3,
+.decision-info h3 {
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.decision-sidebar h4,
+.decision-info h4 {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 12px 0 6px 0;
+}
+
+.decision-sidebar .scenario-list,
+.decision-sidebar .control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.decision-sidebar button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+}
+
+.decision-sidebar button:hover {
+  background: rgba(100, 150, 255, 0.3);
+}
+
+.decision-sidebar button.active {
+  background: rgba(74, 144, 226, 0.6);
+  border-color: rgba(74, 144, 226, 0.9);
+}
+
+.decision-sidebar button.primary-btn {
+  background: rgba(46, 204, 113, 0.5);
+  font-weight: 500;
+}
+
+.decision-sidebar .control-buttons {
+  flex-direction: row;
+}
+
+.decision-sidebar .control-buttons button {
+  flex: 1;
+  text-align: center;
+}
+
+.decision-sidebar .state-badge {
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  color: #fff;
+  margin-bottom: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.decision-sidebar .state-meta {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.decision-sidebar .state-meta div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.decision-sidebar .transitions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.decision-sidebar .transition-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.decision-sidebar .arrow {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.decision-info table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.decision-info th {
+  text-align: left;
+  color: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 0;
+  font-weight: normal;
+}
+
+.decision-info td {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.decision-info .intent-cell {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.decision-info .scenario-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.decision-info .stats-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.decision-info .stats-row > div {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.decision-info .stat-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.decision-info .stat-value {
+  font-size: 18px;
+  font-weight: 500;
+  color: #4a90e2;
+  font-variant-numeric: tabular-nums;
+}
