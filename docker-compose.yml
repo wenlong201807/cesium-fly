@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  # 前端：nginx 托管 React 静态文件 + 反向代理 /api
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cesium-fly-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - mock-server
+    restart: unless-stopped
+    networks:
+      - cesium-net
+
+  # Mock 数据后端：Express 服务
+  mock-server:
+    build:
+      context: ./mock-server
+      dockerfile: Dockerfile
+    container_name: cesium-fly-mock
+    expose:
+      - "3000"
+    restart: unless-stopped
+    networks:
+      - cesium-net
+
+networks:
+  cesium-net:
+    driver: bridge
