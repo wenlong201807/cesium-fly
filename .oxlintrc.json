@@ -48,7 +48,10 @@
     "no-underscore-dangle": "off",
     "consistent-type-imports": "off",
     "no-null": "off",
-    "no-rest-spread-properties": "off"
+    "no-rest-spread-properties": "off",
+    "eqeqeq": "off",
+    "no-continue": "off",
+    "prefer-destructuring": "off"
   },
   "ignorePatterns": [
     "node_modules",
