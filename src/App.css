@@ -109,7 +109,7 @@ main {
 .flight-info {
   bottom: 80px;
   right: 16px;
-  min-width: 280px;
+  min-width: 200px;
 }
 
 .control-panel h3,

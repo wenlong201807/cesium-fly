@@ -2,12 +2,7 @@
 // 实时显示飞机当前位置 / 高度 / 速度 / 航向 / 阶段 / 进度
 import { useEffect, useState } from 'react';
 import * as Cesium from 'cesium';
-import {
-  formatAlt,
-  formatHeading,
-  formatLonLat,
-  formatSpeed,
-} from '../utils/format';
+import { formatAlt, formatHeading, formatSpeed } from '../utils/format';
 import type { FlightData, Waypoint } from '../types/flight';
 
 export interface FlightInfoProps {
@@ -95,8 +90,12 @@ export function FlightInfo({ viewer, flightData }: FlightInfoProps) {
         <table>
           <tbody>
             <tr>
-              <td>经纬度</td>
-              <td>{formatLonLat(state.lon, state.lat)}</td>
+              <td>经度</td>
+              <td>{state.lon.toFixed(6)}°</td>
+            </tr>
+            <tr>
+              <td>纬度</td>
+              <td>{state.lat.toFixed(6)}°</td>
             </tr>
             <tr>
               <td>高度</td>
