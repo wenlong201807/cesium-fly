@@ -7,6 +7,8 @@ export interface FlightHandle {
   entity: Cesium.Entity;
   start: () => void;
   pause: () => void;
+  toggle: () => boolean;
+  isPlaying: () => boolean;
   reset: () => void;
   setSpeed: (multiplier: number) => void;
   destroy: () => void;
@@ -51,13 +53,15 @@ function buildPathMaterial(waypoints: Waypoint[], start: Cesium.JulianDate) {
 }
 
 export function createFlight(viewer: Cesium.Viewer, data: FlightData): FlightHandle {
-  // 1. 基准时间：用 Cesium 当前时钟即可，让 startTime/StopTime 跟随 viewer.clock
+  // 注意：默认 shouldAnimate=false，由 useFlight.handle.start() 启动
   const start = Cesium.JulianDate.fromIso8601('2026-09-03T10:00:00Z');
   const stop = Cesium.JulianDate.addSeconds(
     start,
     data.duration,
     new Cesium.JulianDate()
   );
+
+  // 用 data.duration 配置 Clock 范围
 
   // 2. SampledPositionProperty 收集所有航点
   const position = new Cesium.SampledPositionProperty();
@@ -100,17 +104,16 @@ export function createFlight(viewer: Cesium.Viewer, data: FlightData): FlightHan
     },
   });
 
-  // 5. 配置 Clock
+  // 5. 配置 Clock：默认暂停，speed=10
   viewer.clock.startTime = start.clone();
   viewer.clock.stopTime = stop.clone();
   viewer.clock.currentTime = start.clone();
   viewer.clock.clockRange = Cesium.ClockRange.CLAMPED;
   viewer.clock.multiplier = 10;
-  viewer.clock.shouldAnimate = true;
-  viewer.timeline.zoomTo(start, stop);
+  viewer.clock.shouldAnimate = false; // 默认暂停，等待用户点播放
 
-  // 6. 初始视角飞到整条航线中心
-  flyToOverview(viewer, data.waypoints);
+  // 6. 延迟切到驾驶舱视角（在 CesiumViewer 挂载完成后切）
+  // 这里只返回一个 hint，真正切视角由 React 端通过 switchView 完成
 
   // 7. 封装操作
   const handle: FlightHandle = {
@@ -121,6 +124,11 @@ export function createFlight(viewer: Cesium.Viewer, data: FlightData): FlightHan
     pause: () => {
       viewer.clock.shouldAnimate = false;
     },
+    toggle: () => {
+      viewer.clock.shouldAnimate = !viewer.clock.shouldAnimate;
+      return viewer.clock.shouldAnimate;
+    },
+    isPlaying: () => viewer.clock.shouldAnimate,
     reset: () => {
       viewer.clock.currentTime = start.clone();
       viewer.clock.shouldAnimate = false;

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useCesium } from '../hooks/useCesium';
 import { useFlight } from '../hooks/useFlight';
 import { setupMousePick } from '../cesium/mousePick';
+import { switchView } from '../cesium/cameraViews';
 import { ControlPanel } from './ControlPanel';
 import { ViewSwitcher } from './ViewSwitcher';
 import { FlightInfo } from './FlightInfo';
@@ -14,11 +15,16 @@ export function CesiumViewer() {
   const { viewer, ready, error } = useCesium(containerRef);
   const { flightData, flight, loading } = useFlight(viewer);
 
+  // flight 就绪后：默认切到驾驶舱视角（默认暂停由 createFlight 配置）
+  useEffect(() => {
+    if (!viewer || !flight) return;
+    switchView(viewer, flight.entity, 'cockpit');
+  }, [viewer, flight]);
+
   // 鼠标拾取：viewer/flightData/flight 都就绪后再绑定
   useEffect(() => {
     if (!viewer || !flight || !flightData) return;
     const destroy = setupMousePick(viewer, flightData.waypoints, (info) => {
-      // 目前只在控制台打印，便于联调
       if (info) console.log('[pick]', info);
     });
     return destroy;

@@ -123,15 +123,65 @@ main {
   background: rgba(100, 150, 255, 0.4);
 }
 
+.control-panel button.active,
+.view-switcher button.active {
+  background: rgba(74, 144, 226, 0.6);
+  border-color: rgba(74, 144, 226, 0.9);
+  font-weight: 500;
+}
+
 .control-panel button:disabled,
 .view-switcher button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.speed-group {
+/* 播放控制布局 */
+.control-panel .play-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.control-panel .play-btn {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.control-panel .reset-btn {
+  min-width: 60px;
+}
+
+.control-panel .speed-group {
   margin-top: 8px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.control-panel .speed-label {
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 4px;
+}
+
+.control-panel .speed-btn {
+  min-width: 40px;
+  font-size: 12px;
+}
+
+/* 视角切换布局 */
+.view-switcher .view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.view-switcher .view-btn {
+  font-size: 12px;
+  padding: 8px 4px;
 }
 
 .flight-info table {
