@@ -1,6 +1,6 @@
 // src/data/beijing-roads.mock.ts
-// 北京七环道路网 Mock 数据（网格采样 + 城市干道）
-// 用于路径规划演示，无需网络请求
+// 北京道路网 Mock 数据（网格采样）
+// 用于路径规划 + 自动驾驶仿真
 import { buildGraph, type Graph } from '../algorithms/astar';
 
 interface RoadNode {
@@ -14,16 +14,21 @@ interface RoadEdge {
   weight: number;
 }
 
-/** 北京七环范围 */
-const BOUNDS = { minLat: 39.4, maxLat: 40.6, minLon: 115.5, maxLon: 117.8 };
+/** 北京区域边界 */
+export const BEIJING_BOUNDS = {
+  minLat: 39.4,
+  maxLat: 40.6,
+  minLon: 115.5,
+  maxLon: 117.8,
+};
 
-/** 网格节点（每 ~0.08° 采样一个节点，约 8-9km 间隔） */
+const GRID_STEP = 0.05; // ~5km 间隔
+
+/** 网格节点 */
 const rawNodes: RoadNode[] = [];
 let nodeIdx = 0;
-// 纵向网格（南北向）
-for (let lat = BOUNDS.minLat; lat <= BOUNDS.maxLat; lat += 0.08) {
-  // 东西向主路
-  for (let lon = BOUNDS.minLon; lon <= BOUNDS.maxLon; lon += 0.08) {
+for (let lat = BEIJING_BOUNDS.minLat; lat <= BEIJING_BOUNDS.maxLat; lat += GRID_STEP) {
+  for (let lon = BEIJING_BOUNDS.minLon; lon <= BEIJING_BOUNDS.maxLon; lon += GRID_STEP) {
     rawNodes.push({ id: `n${nodeIdx++}`, lon, lat });
   }
 }
@@ -41,12 +46,12 @@ function dist(lon1: number, lat1: number, lon2: number, lat2: number): number {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-/** 道路等级权重系数 */
+/** 道路等级权重 */
 const WEIGHT = { major: 1.0, normal: 1.5 };
 
-/** 生成边（相邻网格节点相连） */
+/** 生成边 */
 const rawEdges: RoadEdge[] = [];
-const cols = Math.round((BOUNDS.maxLon - BOUNDS.minLon) / 0.08) + 1;
+const cols = Math.round((BEIJING_BOUNDS.maxLon - BEIJING_BOUNDS.minLon) / GRID_STEP) + 1;
 
 for (let i = 0; i < rawNodes.length; i++) {
   const a = rawNodes[i];
@@ -55,12 +60,11 @@ for (let i = 0; i < rawNodes.length; i++) {
   if (eastIdx < rawNodes.length) {
     const b = rawNodes[eastIdx];
     if (Math.abs(a.lat - b.lat) < 0.001) {
-      // 横向主路（major），纵向次路（normal）
       const w = dist(a.lon, a.lat, b.lon, b.lat) * WEIGHT.major;
       rawEdges.push({ from: a.id, to: b.id, weight: w });
     }
   }
-  // 北向邻居（下一行）
+  // 北向邻居
   const northIdx = i + cols;
   if (northIdx < rawNodes.length) {
     const c = rawNodes[northIdx];
@@ -71,7 +75,31 @@ for (let i = 0; i < rawNodes.length; i++) {
   }
 }
 
-/** 北京七环道路网 Graph（单例） */
+/** 道路线段列表（用于可视化）*/
+let _roads: { lon: number; lat: number }[][] | null = null;
+export function getRoads(): { lon: number; lat: number }[][] {
+  if (!_roads) {
+    const seen = new Set<string>();
+    const roads: { lon: number; lat: number }[][] = [];
+    rawEdges.forEach((edge) => {
+      const key = [edge.from, edge.to].sort().join('-');
+      if (seen.has(key)) return;
+      seen.add(key);
+      const fromNode = rawNodes.find((n) => n.id === edge.from);
+      const toNode = rawNodes.find((n) => n.id === edge.to);
+      if (fromNode && toNode) {
+        roads.push([
+          { lon: fromNode.lon, lat: fromNode.lat },
+          { lon: toNode.lon, lat: toNode.lat },
+        ]);
+      }
+    });
+    _roads = roads;
+  }
+  return _roads;
+}
+
+/** 北京道路网 Graph（单例） */
 let _graph: Graph | null = null;
 export function getBeijingGraph(): Graph {
   if (!_graph) {
