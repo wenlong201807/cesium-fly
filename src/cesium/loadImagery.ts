@@ -1,23 +1,24 @@
 // src/cesium/loadImagery.ts
-// 用 UrlTemplateImageryProvider 按图层依次加载底图（瓦片按需懒加载，非预加载）
-// 支持天地图 WMTS（y 坐标需反向）和 OSM 标准 TMS
+// 底图瓦片加载：优先使用国内可达的 ESRI 卫星图，备用 OSM
 import * as Cesium from 'cesium';
 import { getLayerConfig } from '../config/tianditu';
 import type { ImageryConfig } from '../types/flight';
 
-/** OSM 标准底图（无需 token，可作为备用） */
-const OSM_IMAGERY: Partial<Record<string, { url: string; subdomains: string[]; maximumLevel: number; credit: string }>> = {
+/** ESRI World Imagery（卫星图，国内稳定可达）*/
+const ESRI_IMAGERY = {
   img: {
-    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    subdomains: ['a', 'b', 'c'],
+    // ESRI 用 {y}/{x} 顺序（与 OSM 相反）
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    subdomains: [],
     maximumLevel: 19,
-    credit: '© OpenStreetMap contributors',
+    credit: '© Esri — Source: Esri, USGS, NOAA',
   },
   cia: {
-    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    subdomains: ['a', 'b', 'c'],
+    // ESRI Labels 图层（道路/地名标注）
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    subdomains: [],
     maximumLevel: 19,
-    credit: '© OpenStreetMap contributors',
+    credit: '© Esri',
   },
 };
 
@@ -26,19 +27,28 @@ export function loadImagery(
   viewer: Cesium.Viewer,
   layers: ImageryConfig['layers']
 ): void {
-  // 先清掉可能存在的占位图层
   viewer.imageryLayers.removeAll();
 
   layers.forEach((layer) => {
-    const cfg = getLayerConfig(layer);
-    const osmCfg = OSM_IMAGERY[layer];
-    const provider = new Cesium.UrlTemplateImageryProvider({
-      url: osmCfg ? osmCfg.url : cfg.url,
-      subdomains: osmCfg ? osmCfg.subdomains : cfg.subdomains,
-      maximumLevel: osmCfg ? osmCfg.maximumLevel : cfg.maximumLevel,
-      credit: osmCfg ? osmCfg.credit : cfg.credit,
-    });
-    // addImageryProvider 会自动把新图层加到最上层
-    viewer.imageryLayers.addImageryProvider(provider);
+    const esriCfg = ESRI_IMAGERY[layer as keyof typeof ESRI_IMAGERY];
+    if (esriCfg) {
+      const provider = new Cesium.UrlTemplateImageryProvider({
+        url: esriCfg.url,
+        subdomains: esriCfg.subdomains,
+        maximumLevel: esriCfg.maximumLevel,
+        credit: esriCfg.credit,
+      });
+      viewer.imageryLayers.addImageryProvider(provider);
+    } else {
+      // 兜底天地图（需有效 tk）
+      const cfg = getLayerConfig(layer);
+      const provider = new Cesium.UrlTemplateImageryProvider({
+        url: cfg.url,
+        subdomains: cfg.subdomains,
+        maximumLevel: cfg.maximumLevel,
+        credit: cfg.credit,
+      });
+      viewer.imageryLayers.addImageryProvider(provider);
+    }
   });
 }
