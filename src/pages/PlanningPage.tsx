@@ -1,5 +1,5 @@
 // src/pages/PlanningPage.tsx
-// 道路级路径规划页：A* + Dijkstra + 北京七环 OSM
+// 道路级路径规划页：A* + Dijkstra + 北京七环道路网
 import { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import { createViewer } from '../cesium/createViewer';
@@ -10,7 +10,10 @@ import {
   type Graph,
   type PathResult,
 } from '../algorithms/astar';
-import { loadBeijingRoads, BEIJING_BOUNDS } from '../algorithms/osmLoader';
+import {
+  getBeijingGraph,
+  BEIJING_ROAD_STATS,
+} from '../data/beijing-roads.mock';
 
 type AlgoType = 'astar' | 'dijkstra';
 
@@ -25,8 +28,6 @@ export default function PlanningPage() {
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const graphRef = useRef<Graph | null>(null);
 
-  const [progress, setProgress] = useState('');
-  const [graphReady, setGraphReady] = useState(false);
   const [algo, setAlgo] = useState<AlgoType>('astar');
   const [startPoint, setStartPoint] = useState<PickPoint | null>(null);
   const [endPoint, setEndPoint] = useState<PickPoint | null>(null);
@@ -40,10 +41,11 @@ export default function PlanningPage() {
     viewerRef.current = viewer;
     loadImagery(viewer, ['img', 'cia']);
 
+    const bounds = getBeijingBounds();
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(
-        (BEIJING_BOUNDS.minLon + BEIJING_BOUNDS.maxLon) / 2,
-        (BEIJING_BOUNDS.minLat + BEIJING_BOUNDS.maxLat) / 2,
+        (bounds.minLon + bounds.maxLon) / 2,
+        (bounds.minLat + bounds.maxLat) / 2,
         250_000
       ),
       duration: 1,
@@ -54,10 +56,10 @@ export default function PlanningPage() {
       name: '北京七环范围',
       rectangle: {
         coordinates: Cesium.Rectangle.fromDegrees(
-          BEIJING_BOUNDS.minLon,
-          BEIJING_BOUNDS.minLat,
-          BEIJING_BOUNDS.maxLon,
-          BEIJING_BOUNDS.maxLat
+          bounds.minLon,
+          bounds.minLat,
+          bounds.maxLon,
+          bounds.maxLat
         ),
         material: Cesium.Color.fromCssColorString('#4a90e2').withAlpha(0.05),
         outline: true,
@@ -65,33 +67,13 @@ export default function PlanningPage() {
       },
     });
 
+    // 加载道路网
+    graphRef.current = getBeijingGraph();
+    renderAllRoads();
+
     return () => {
       viewerRef.current = null;
       viewer.destroy();
-    };
-  }, []);
-
-  // 加载 OSM 道路网
-  useEffect(() => {
-    let cancelled = false;
-    loadBeijingRoads((msg) => {
-      if (!cancelled) setProgress(msg);
-    })
-      .then((graph) => {
-        if (cancelled) return;
-        graphRef.current = graph;
-        setGraphReady(true);
-        setProgress('');
-        renderAllRoads();
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          console.error('[OSM] 加载失败：', err);
-          setProgress('OSM 数据加载失败，请检查网络。');
-        }
-      });
-    return () => {
-      cancelled = true;
     };
   }, []);
 
@@ -100,33 +82,12 @@ export default function PlanningPage() {
     const graph = graphRef.current;
     if (!viewer || !graph) return;
 
-    viewer.entities.removeAll();
-
-    viewer.entities.add({
-      name: '北京七环范围',
-      rectangle: {
-        coordinates: Cesium.Rectangle.fromDegrees(
-          BEIJING_BOUNDS.minLon,
-          BEIJING_BOUNDS.minLat,
-          BEIJING_BOUNDS.maxLon,
-          BEIJING_BOUNDS.maxLat
-        ),
-        material: Cesium.Color.fromCssColorString('#4a90e2').withAlpha(0.05),
-        outline: true,
-        outlineColor: Cesium.Color.fromCssColorString('#4a90e2').withAlpha(0.6),
-      },
-    });
-
     // 收集所有边
     const positions: Cesium.Cartesian3[] = [];
     graph.adj.forEach((neighbors, nodeId) => {
       const fromNode = graph.nodes.get(nodeId);
       if (!fromNode) return;
-      const fromPos = Cesium.Cartesian3.fromDegrees(
-        fromNode.lon,
-        fromNode.lat,
-        0
-      );
+      const fromPos = Cesium.Cartesian3.fromDegrees(fromNode.lon, fromNode.lat, 0);
       for (const { neighborId } of neighbors) {
         const toNode = graph.nodes.get(neighborId);
         if (!toNode) continue;
@@ -262,123 +223,113 @@ export default function PlanningPage() {
 
   return (
     <div className="planning-page">
-      <div className="planning-map" ref={containerRef}>
-        {!graphReady && (
-          <div className="loading-overlay">
-            <h3>加载北京七环道路网中...</h3>
-            <p>{progress || '准备中...'}</p>
-          </div>
-        )}
-      </div>
+      <div className="planning-map" ref={containerRef} />
 
       {/* 控制面板 */}
       <aside className="planning-panel">
         <h3>路径规划</h3>
 
-        {!graphReady && (
-          <p className="hint">{progress || '加载 OSM 数据中...'}</p>
-        )}
+        <p className="hint">
+          北京七环道路网 · {BEIJING_ROAD_STATS.nodeCount} 节点 ·{' '}
+          {BEIJING_ROAD_STATS.edgeCount} 边
+        </p>
 
-        {graphReady && (
-          <>
-            <div className="algo-group">
-              <button
-                className={algo === 'astar' ? 'active' : ''}
-                onClick={() => setAlgo('astar')}
-              >
-                A* 启发式
-              </button>
-              <button
-                className={algo === 'dijkstra' ? 'active' : ''}
-                onClick={() => setAlgo('dijkstra')}
-              >
-                Dijkstra
-              </button>
-            </div>
+        <div className="algo-group">
+          <button
+            className={algo === 'astar' ? 'active' : ''}
+            onClick={() => setAlgo('astar')}
+          >
+            A* 启发式
+          </button>
+          <button
+            className={algo === 'dijkstra' ? 'active' : ''}
+            onClick={() => setAlgo('dijkstra')}
+          >
+            Dijkstra
+          </button>
+        </div>
 
-            <div className="pick-row">
-              <button
-                className={pickingMode === 'start' ? 'active' : ''}
-                onClick={() => setPickingMode('start')}
-              >
-                📍 选起点
-              </button>
-              <button
-                className={pickingMode === 'end' ? 'active' : ''}
-                onClick={() => setPickingMode('end')}
-              >
-                🎯 选终点
-              </button>
-            </div>
+        <div className="pick-row">
+          <button
+            className={pickingMode === 'start' ? 'active' : ''}
+            onClick={() => setPickingMode('start')}
+          >
+            📍 选起点
+          </button>
+          <button
+            className={pickingMode === 'end' ? 'active' : ''}
+            onClick={() => setPickingMode('end')}
+          >
+            🎯 选终点
+          </button>
+        </div>
 
-            <div className="point-info">
-              <div>
-                <span className="point-label" style={{ color: '#4a90e2' }}>
-                  起点
-                </span>
-                <span>
-                  {startPoint
-                    ? `${startPoint.lon.toFixed(4)}, ${startPoint.lat.toFixed(4)}`
-                    : '未选择'}
-                </span>
-              </div>
-              <div>
-                <span className="point-label" style={{ color: '#e74c3c' }}>
-                  终点
-                </span>
-                <span>
-                  {endPoint
-                    ? `${endPoint.lon.toFixed(4)}, ${endPoint.lat.toFixed(4)}`
-                    : '未选择'}
-                </span>
-              </div>
-            </div>
+        <div className="point-info">
+          <div>
+            <span className="point-label" style={{ color: '#4a90e2' }}>
+              起点
+            </span>
+            <span>
+              {startPoint
+                ? `${startPoint.lon.toFixed(4)}, ${startPoint.lat.toFixed(4)}`
+                : '未选择'}
+            </span>
+          </div>
+          <div>
+            <span className="point-label" style={{ color: '#e74c3c' }}>
+              终点
+            </span>
+            <span>
+              {endPoint
+                ? `${endPoint.lon.toFixed(4)}, ${endPoint.lat.toFixed(4)}`
+                : '未选择'}
+            </span>
+          </div>
+        </div>
 
-            <div className="action-row">
-              <button
-                className="primary-btn"
-                disabled={!startPoint || !endPoint}
-                onClick={runPathfinding}
-              >
-                开始寻路
-              </button>
-              <button onClick={clearPath}>清除</button>
-            </div>
+        <div className="action-row">
+          <button
+            className="primary-btn"
+            disabled={!startPoint || !endPoint}
+            onClick={runPathfinding}
+          >
+            开始寻路
+          </button>
+          <button onClick={clearPath}>清除</button>
+        </div>
 
-            {result && (
-              <div className="result-panel">
-                <h4>规划结果</h4>
-                <span className="result-algo">
-                  算法：
-                  {result.algorithm === 'astar' ? 'A* 启发式' : 'Dijkstra'}
-                </span>
-                <table>
-                  <tbody>
-                    <tr>
-                      <td>总距离</td>
-                      <td>{result.totalWeight.toFixed(2)} km</td>
-                    </tr>
-                    <tr>
-                      <td>节点数</td>
-                      <td>{result.path.length}</td>
-                    </tr>
-                    <tr>
-                      <td>计算耗时</td>
-                      <td>{result.computeTime.toFixed(2)} ms</td>
-                    </tr>
-                    <tr>
-                      <td>状态</td>
-                      <td>
-                        {result.path.length > 0
-                          ? '✅ 找到路径'
-                          : '❌ 无可达路径'}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
+        {result && (
+          <div className="result-panel">
+            <h4>规划结果</h4>
+            <span className="result-algo">
+              算法：
+              {result.algorithm === 'astar' ? 'A* 启发式' : 'Dijkstra'}
+            </span>
+            <table>
+              <tbody>
+                <tr>
+                  <td>总距离</td>
+                  <td>{result.totalWeight.toFixed(2)} km</td>
+                </tr>
+                <tr>
+                  <td>节点数</td>
+                  <td>{result.path.length}</td>
+                </tr>
+                <tr>
+                  <td>计算耗时</td>
+                  <td>{result.computeTime.toFixed(2)} ms</td>
+                </tr>
+                <tr>
+                  <td>状态</td>
+                  <td>
+                    {result.path.length > 0
+                      ? '✅ 找到路径'
+                      : '❌ 无可达路径'}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         )}
       </aside>
     </div>
@@ -401,4 +352,16 @@ function findNearestNode(
     }
   });
   return nearestId;
+}
+
+/** 北京七环边界常量（供 flyTo 使用） */
+export const BEIJING_BOUNDS = {
+  minLat: 39.4,
+  maxLat: 40.6,
+  minLon: 115.5,
+  maxLon: 117.8,
+};
+
+function getBeijingBounds() {
+  return BEIJING_BOUNDS;
 }
